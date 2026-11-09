@@ -1,9 +1,9 @@
 'use strict';
 
 /* 只缓存「外壳」，聊天请求永远走网络。
-   版本号变了才会重新拉取，更新时改 CACHE 里的数字。 */
+   某项资源缺失也不会让安装失败；更新时改 CACHE 里的版本号。 */
 
-const CACHE = 'hilvi-shell-v3';
+const CACHE = 'hilvi-shell-v4';
 const SHELL = [
   './',
   './index.html',
@@ -11,18 +11,20 @@ const SHELL = [
   './persona.js',
   './style.css',
   './manifest.json',
-  './assets/hilvi.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-maskable-512.png',
+  './avatar.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(CACHE);
+      // 逐个缓存：任何一项 404 都不该让整个 Service Worker 装不上
+      await Promise.all(SHELL.map((url) => cache.add(url).catch(() => {})));
+      await self.skipWaiting();
+    })()
   );
 });
 
