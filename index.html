@@ -1,0 +1,146 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>希尔薇 · 陪聊</title>
+<meta name="theme-color" content="#f9f1ec" />
+<meta name="description" content="希尔薇 —— 一个会记住你的陪聊少女。" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="希尔薇" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="avatar">
+      <img id="avatarImg" src="assets/hilvi.png" alt="希尔薇" onerror="this.classList.add('gone')" />
+      <span class="avatar-fallback">希</span>
+    </div>
+    <div class="identity">
+      <h1>希尔薇</h1>
+      <p class="sub">她在这里。</p>
+    </div>
+    <div class="topbar-right">
+      <span class="mood-chip" id="moodChip">不安</span>
+      <span class="mini-affection"><span class="heart">♥</span><b id="miniAffection">5</b></span>
+      <button class="icon-btn" id="settingsBtn" aria-label="设置">⚙</button>
+    </div>
+  </header>
+
+  <main class="chat" id="chat" aria-live="polite"></main>
+
+  <aside class="panel">
+    <section class="card">
+      <div class="panel-label">与你的关系</div>
+      <div class="stage" id="stage">陌生</div>
+      <div class="bar"><div class="bar-fill" id="affectionBar"></div></div>
+      <div class="affection-num"><b id="affectionNum">5</b><span> / 100</span></div>
+    </section>
+
+    <section class="row-card">
+      <span class="panel-label">她的心情</span>
+      <span class="mood-value" id="moodValue">不安</span>
+    </section>
+
+    <section class="card grow">
+      <div class="panel-label">她记得的事</div>
+      <ul class="memories" id="memories"></ul>
+    </section>
+
+    <div class="panel-actions">
+      <button class="ghost" id="exportBtn">备份</button>
+      <button class="ghost" id="resetBtn">重新开始</button>
+    </div>
+    <p class="tip">对话与好感只存在这台设备上</p>
+  </aside>
+
+  <footer class="composer">
+    <div class="banner" id="keyBanner" hidden>
+      还没有填 API Key —— 点右上角 ⚙ 填一次，之后就不用再填了。
+    </div>
+    <div class="input-row">
+      <textarea id="input" rows="1" placeholder="想对她说点什么……" autocomplete="off"></textarea>
+      <button id="sendBtn" class="send" aria-label="发送">发送</button>
+    </div>
+    <div class="hint-line">Enter 发送 · Shift + Enter 换行</div>
+  </footer>
+
+  <div class="install-tip" id="installTip" hidden>
+    <span>加到主屏幕，就像个 App</span>
+    <button id="installTipBtn" type="button">安装</button>
+    <button id="installTipClose" type="button" aria-label="不再提示">✕</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<!-- 设置 / 首次配置 -->
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-card">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">设置</h2>
+      <button class="icon-btn" id="sheetClose" aria-label="关闭">✕</button>
+    </div>
+
+    <div class="sheet-body">
+      <label class="field">
+        <span>DeepSeek API Key</span>
+        <div class="key-row">
+          <input id="cfgKey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+          <button class="mini-btn" id="toggleKey" type="button">显示</button>
+        </div>
+        <small>到 <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a> 创建；只存在你手机的浏览器里。</small>
+      </label>
+
+      <details class="advanced">
+        <summary>高级（接口地址、模型、语气）</summary>
+        <label class="field">
+          <span>接口地址 baseURL</span>
+          <input id="cfgBase" type="url" placeholder="https://api.deepseek.com" />
+        </label>
+        <label class="field">
+          <span>模型</span>
+          <input id="cfgModel" type="text" placeholder="deepseek-flash" />
+        </label>
+        <label class="field">
+          <span>发散程度 <b id="tempVal">1.2</b></span>
+          <input id="cfgTemp" type="range" min="0.7" max="1.6" step="0.1" value="1.2" />
+        </label>
+        <label class="field">
+          <span>回复长度上限 <b id="maxVal">400</b> tokens</span>
+          <input id="cfgMax" type="range" min="200" max="900" step="50" value="400" />
+        </label>
+      </details>
+
+      <div class="sheet-actions">
+        <button class="primary" id="saveCfg">保存</button>
+      </div>
+
+      <hr />
+
+      <div class="data-block">
+        <div class="panel-label">存档</div>
+        <p class="data-hint" id="dataHint">在她还愿意记得你的时候，记得备份。</p>
+        <div class="data-row">
+          <button class="ghost" id="importBtn">导入存档</button>
+          <button class="ghost danger" id="wipeBtn">清空一切</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json,.json" hidden />
+      </div>
+
+      <p class="about">数据保存在本机浏览器（localStorage）。换浏览器、清缓存会丢，请用「备份」导出。</p>
+    </div>
+  </div>
+</div>
+
+<script src="persona.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
